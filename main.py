@@ -55,6 +55,40 @@ def parse_title(title):
 
     return subject, lecture, topic, batch
 
+
+# ✅ Start command
+@bot.message_handler(commands=['start'])
+def start_command(message):
+    welcome_text = (
+        "👋 Namaste! Main ek YouTube Title Extractor Bot hoon.\n\n"
+        "📌 Aap mujhe koi bhi YouTube link bhejiye, aur mai uska Title + Details nikal dunga.\n\n"
+        "ℹ️ Commands:\n"
+        "/start - Bot ko shuru kare\n"
+        "/help - Madad aur commands dekhe\n\n"
+        "✨ made by Antaryami 🇮🇳"
+    )
+
+    markup = InlineKeyboardMarkup()
+    channel_button = InlineKeyboardButton("📢 Join Our Channel", url="https://t.me/+EAo5RTrXbnliZDM1")
+    markup.add(channel_button)
+
+    bot.reply_to(message, welcome_text, reply_markup=markup)
+
+
+# ✅ Help command
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    help_text = (
+        "📖 *Help Menu*\n\n"
+        "1️⃣ Mujhe YouTube ka koi bhi link bhejiye.\n"
+        "2️⃣ Main uska Title, Subject, Lecture, Topic, aur Batch nikal dunga.\n\n"
+        "💡 Example: https://youtu.be/abcd1234\n\n"
+        "✨ made by Antaryami 🇮🇳"
+    )
+    bot.reply_to(message, help_text, parse_mode="Markdown")
+
+
+# ✅ YouTube link handler
 @bot.message_handler(func=lambda msg: "youtube.com" in msg.text or "youtu.be" in msg.text)
 def handle_youtube_link(message):
     url = message.text.strip()
@@ -83,6 +117,7 @@ def handle_youtube_link(message):
     markup.add(channel_button)
 
     bot.reply_to(message, reply_msg, reply_markup=markup)
+
 
 # Flask route for webhook
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
