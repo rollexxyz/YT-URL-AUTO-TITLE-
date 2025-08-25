@@ -3,18 +3,19 @@ import requests
 import re
 import os
 from flask import Flask, request
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Tokens
-BOT_TOKEN = os.getenv("BOT_TOKEN")   # Render me Environment variable set karo
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Flask app for Render
+# Flask app
 app = Flask(__name__)
 
+CHANNEL_LINK = "https://t.me/+EAo5RTrXbnliZDM1"
+
+# YouTube title fetch
 def get_youtube_title(video_url):
-    """ YouTube link se Title nikalta hai """
     try:
         if "watch?v=" in video_url:
             video_id = video_url.split("watch?v=")[1].split("&")[0]
@@ -32,8 +33,8 @@ def get_youtube_title(video_url):
     except:
         return None
 
+# Title parsing
 def parse_title(title):
-    """ Title ko Subject, Lecture, Topic, Batch me todta hai """
     subject, lecture, topic, batch = "Unknown", "N/A", "N/A", "N/A"
 
     lecture_match = re.search(r"Lecture\s*(\d+)", title, re.IGNORECASE)
@@ -46,49 +47,19 @@ def parse_title(title):
 
     if lecture_match:
         lecture = lecture_match.group(1)
-
     if topic_match:
         topic = topic_match.group(1).strip()
-
     if batch_match:
         batch = batch_match.group(1).strip()
 
     return subject, lecture, topic, batch
 
+# /start command
+@bot.message_handler(commands=["start"])
+def start_cmd(message):
+    bot.reply_to(message, "👋 Namaste! Mujhe YouTube link bhejo, main uska title tod kar deta hoon 📚")
 
-# ✅ Start command
-@bot.message_handler(commands=['start'])
-def start_command(message):
-    welcome_text = (
-        "👋 Namaste! Main ek YouTube Title Extractor Bot hoon.\n\n"
-        "📌 Aap mujhe koi bhi YouTube link bhejiye, aur mai uska Title + Details nikal dunga.\n\n"
-        "ℹ️ Commands:\n"
-        "/start - Bot ko shuru kare\n"
-        "/help - Madad aur commands dekhe\n\n"
-        "✨ made by Antaryami 🇮🇳"
-    )
-
-    markup = InlineKeyboardMarkup()
-    channel_button = InlineKeyboardButton("📢 Join Our Channel", url="https://t.me/+EAo5RTrXbnliZDM1")
-    markup.add(channel_button)
-
-    bot.reply_to(message, welcome_text, reply_markup=markup)
-
-
-# ✅ Help command
-@bot.message_handler(commands=['help'])
-def help_command(message):
-    help_text = (
-        "📖 *Help Menu*\n\n"
-        "1️⃣ Mujhe YouTube ka koi bhi link bhejiye.\n"
-        "2️⃣ Main uska Title, Subject, Lecture, Topic, aur Batch nikal dunga.\n\n"
-        "💡 Example: https://youtu.be/abcd1234\n\n"
-        "✨ made by Antaryami 🇮🇳"
-    )
-    bot.reply_to(message, help_text, parse_mode="Markdown")
-
-
-# ✅ YouTube link handler
+# YouTube link handler
 @bot.message_handler(func=lambda msg: "youtube.com" in msg.text or "youtu.be" in msg.text)
 def handle_youtube_link(message):
     url = message.text.strip()
@@ -111,13 +82,11 @@ def handle_youtube_link(message):
         "✨ made by Antaryami 🇮🇳"
     )
 
-    # Inline button for channel
-    markup = InlineKeyboardMarkup()
-    channel_button = InlineKeyboardButton("📢 Join Our Channel", url="https://t.me/+EAo5RTrXbnliZDM1")
-    markup.add(channel_button)
+    markup = telebot.types.InlineKeyboardMarkup()
+    markup.add(telebot.types.InlineKeyboardButton("📺 Watch Now", url=url))
+    markup.add(telebot.types.InlineKeyboardButton("📢 Join Our Channel", url=CHANNEL_LINK))
 
     bot.reply_to(message, reply_msg, reply_markup=markup)
-
 
 # Flask route for webhook
 @app.route(f"/{BOT_TOKEN}", methods=["POST"])
@@ -132,5 +101,5 @@ def index():
     return "🤖 Bot is running with Flask on Render!", 200
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))  # Render ke liye port 10000
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
